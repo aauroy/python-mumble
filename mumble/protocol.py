@@ -106,14 +106,20 @@ class ControlProtocol(asyncio.Protocol):
 
             assert len(raw_message) == length
 
-            message = self.PACKET_TYPES[type]()
+            packet_cls = self.PACKET_TYPES[type]
+
+            if packet_cls is Mumble_pb2.UDPTunnel:
+                self.mumble_udp_tunnel_received(raw_message)
+                continue
+
+            message = packet_cls()
             message.ParseFromString(raw_message)
             self.message_received(message)
 
     def message_received(self, message):
         logger.debug('<-- %s\n%s', message.__class__.__name__, message)
         handler_name = 'mumble{}_received'.format(
-            re.sub('[A-Z]', lambda x: '_' + x.group(0).lower(),
+            re.sub('[A-Z]+', lambda x: '_' + x.group(0).lower(),
                    message.__class__.__name__))
 
         try:
@@ -124,6 +130,9 @@ class ControlProtocol(asyncio.Protocol):
             handler(message)
 
     def mumble_version_received(self, message):
+        pass
+
+    def mumble_udp_tunnel_received(self, packet):
         pass
 
     def mumble_crypt_setup_received(self, message):
@@ -146,6 +155,7 @@ class ControlProtocol(asyncio.Protocol):
 
     def mumble_server_config_received(self, message):
         self.server_config = message
+        self.client.connection_ready()
 
     def mumble_ping_received(self, message):
         pass
@@ -177,6 +187,6 @@ class ControlProtocol(asyncio.Protocol):
 
         self.send_message(msg)
 
-    def join_channel(self, session, channel_id):
-        self.send_message(Mumble_pb2.UserState(actor=session, session=session,
+    def move_user(self, actor, session, channel_id):
+        self.send_message(Mumble_pb2.UserState(actor=actor, session=session,
                                                channel_id=channel_id))

@@ -39,6 +39,9 @@ class User(object):
         self.client = client
         self.session = session
 
+    def get_channel(self):
+        return self.client.channels[self.channel_id]
+
     def update_from_state(self, message):
         self.user_id = message.user_id if message.HasField('user_id') else None
         self.name = message.name

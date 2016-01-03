@@ -83,9 +83,14 @@ class Client(object):
             channel_ids=channel_ids, tree_ids=tree_ids)
 
     def join_channel(self, channel):
-        self.control_protocol.join_channel(self.me.session, channel.id)
+        self.control_protocol.move_user(self.me.session, self.me.session,
+                                        channel.id)
 
     def text_message_received(self, origin, target, message):
+        # Override me!
+        pass
+
+    def connection_ready(self):
         # Override me!
         pass
 
