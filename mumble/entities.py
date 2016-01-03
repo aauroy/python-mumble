@@ -2,27 +2,27 @@ import operator
 
 
 class Channel(object):
-    def __init__(self, store, id):
-        self.store = store
+    def __init__(self, client, id):
+        self.client = client
         self.id = id
 
     def get_parent(self):
         if self.parent_id is None:
             return None
-        return self.store.channels[self.parent_id]
+        return self.client.channels[self.parent_id]
 
     def get_links(self):
-        return [self.store.channels[link_id]
+        return [self.client.channels[link_id]
                 for link_id in self.link_ids]
 
     def get_children(self):
-        children = [channel for channel in self.store.channels.values()
+        children = [channel for channel in self.client.channels.values()
                             if channel.parent_id == self.id]
         children.sort(key=operator.attrgetter('position'))
         return children
 
     def get_users(self):
-        return [user for user in self.store.users.values()
+        return [user for user in self.client.users.values()
                      if user.channel_id == self.id]
 
     def update_from_state(self, message):
@@ -35,8 +35,8 @@ class Channel(object):
 
 
 class User(object):
-    def __init__(self, store, session):
-        self.store = store
+    def __init__(self, client, session):
+        self.client = client
         self.session = session
 
     def update_from_state(self, message):

@@ -65,6 +65,17 @@ class Client(object):
     def get_root_channel(self):
         return self.channels[0]
 
+    def send_text_message(self, target, message, recursive=False):
+        if isinstance(target, entities.User):
+            self.control_protocol.send_text_message_to_user(
+                self.me.session, target.session, message)
+        elif isinstance(target, entities.Channel):
+            self.control_protocol.send_text_message_to_channel(
+                self.me.session, target.id, message, recursive=recursive)
+
+    def join_channel(self, channel):
+        self.control_protocol.join_channel(self.me.session, channel.id)
+
     def mumble_channel_state_received(self, state):
         self._add_channel(state)
 
