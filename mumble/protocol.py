@@ -13,9 +13,7 @@ from . import Mumble_pb2
 logger = logging.getLogger(__name__)
 
 
-class MumbleProtocol(asyncio.Protocol):
-    MUMBLE_VERSION = (1, 2, 4)
-
+class ControlProtocol(asyncio.Protocol):
     PACKET_HEADER = struct.Struct('!HI')
 
     PACKET_TYPES = {
@@ -53,23 +51,12 @@ class MumbleProtocol(asyncio.Protocol):
     def encode_version(major, minor, patch):
         return major << 16 | minor << 8 | patch
 
-    def __init__(self, username, password=None):
-        self.loop = asyncio.get_event_loop()
-
+    def __init__(self, client, username, password):
+        self.client = client
         self.username = username
         self.password = password
         self.buffer = bytearray()
-
         self._ping_handler = None
-
-        self.users = {}
-        self.user_name_id_map = {}
-
-        self.store = entities.Store()
-
-    @property
-    def me(self):
-        return self.store.users_by_name[self.username]
 
     def connection_made(self, transport):
         self.transport = transport
@@ -83,12 +70,12 @@ class MumbleProtocol(asyncio.Protocol):
 
     def start_ping(self):
         self.send_message(Mumble_pb2.Ping(timestamp=int(time.time())))
-        self._ping_handler = self.loop.call_later(20, self.start_ping)
+        self._ping_handler = self.client.loop.call_later(20, self.start_ping)
 
     def send_version(self):
         self.send_message(Mumble_pb2.Version(
-            version=self.encode_version(*self.MUMBLE_VERSION),
-            release='.'.join(str(x) for x in self.MUMBLE_VERSION),
+            version=self.encode_version(*self.client.MUMBLE_VERSION),
+            release='.'.join(str(x) for x in self.client.MUMBLE_VERSION),
             os=platform.system(), os_version=platform.release()))
 
     def authenticate(self, username, password=None):
@@ -140,16 +127,16 @@ class MumbleProtocol(asyncio.Protocol):
         self.crypt_setup = message
 
     def mumble_channel_state_received(self, message):
-        self.store.add_channel(message)
+        self.client.mumble_channel_state_received(message)
 
     def mumble_channel_remove_received(self, message):
-        self.store.remove_channel(message.channel_id)
+        self.client.mumble_channel_remove_received(message.channel_id)
 
     def mumble_user_state_received(self, message):
-        self.store.add_user(message)
+        self.client.mumble_user_state_received(message)
 
     def mumble_user_remove_received(self, message):
-        self.store.remove_user(message.session)
+        self.client.mumble_user_remove_received(message.session)
 
     def mumble_server_state_received(self, message):
         self.server_state = message

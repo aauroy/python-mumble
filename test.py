@@ -3,7 +3,7 @@ import asyncio
 import logging
 import ssl
 
-from mumble import protocol
+import mumble
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('--username', required=True,
@@ -24,8 +24,7 @@ if __name__ == '__main__':
     ssl_ctx.verify_mode = ssl.CERT_NONE
 
     logging.basicConfig(level=logging.DEBUG)
-    coro = loop.create_connection(
-        lambda: protocol.MumbleProtocol(args.username, args.password),
-        args.host, args.port, ssl=ssl_ctx)
-    _, mumble = loop.run_until_complete(coro)
+    c = mumble.Client()
+    loop.run_until_complete(
+        c.connect(args.host, args.port, args.username, args.password, ssl_ctx))
     loop.run_forever()
