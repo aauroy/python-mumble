@@ -16,16 +16,20 @@ class Client(object):
         self.users_by_name = {}
 
     async def connect(self, host, port, username, password=None, ssl_ctx=None):
+        if ssl_ctx is None:
+            ssl_ctx = ssl.create_default_context()
+
         self.loop = asyncio.get_event_loop()
 
         self.host = host
         self.port = port
         self.username = username
 
-        _, self.control_protocol = await self.loop.create_connection(
-            lambda: protocol.ControlProtocol(self, self.username, password),
-            self.host, self.port, ssl=ssl_ctx if ssl_ctx is not None
-                                      else ssl.create_default_context())
+        self.control_protocol = protocol.ControlProtocol(self, self.username,
+                                                         password)
+
+        await self.loop.create_connection(lambda: self.control_protocol,
+                                          self.host, self.port, ssl=ssl_ctx)
 
     @property
     def me(self):
@@ -38,9 +42,11 @@ class Client(object):
         else:
             # We need to delete the old channels_by_name mapping here.
             del self.channels_by_name[self.channels[state.channel_id].name]
-        self.channels[state.channel_id].update_from_state(state)
-        self.channels_by_name[state.name] = self.channels[state.channel_id]
-        return self.channels[state.channel_id]
+
+        channel = self.channels[state.channel_id]
+        channel.update_from_state(state)
+        self.channels_by_name[channel.name] = channel
+        return channel
 
     def _remove_channel(self, id):
         channel = self.channels[id]
@@ -53,9 +59,11 @@ class Client(object):
         else:
             # We need to delete the old users_by_name mapping here.
             del self.users_by_name[self.users[state.session].name]
-        self.users[state.session].update_from_state(state)
-        self.users_by_name[state.name] = self.users[state.session]
-        return self.users[state.session]
+
+        user = self.users[state.session]
+        user.update_from_state(state)
+        self.users_by_name[user.name] = user
+        return user
 
     def _remove_user(self, session):
         user = self.users[session]
