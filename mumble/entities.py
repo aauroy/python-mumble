@@ -1,8 +1,35 @@
 import operator
 
+from google.protobuf import descriptor
 
-class Channel(object):
+
+class Entity(object):
+    FIELDS = {}
+
+    def __init__(self):
+        for k in self.FIELDS:
+            setattr(self, k, None)
+
+    def update_from_state(self, message):
+        for k, v in self.FIELDS.items():
+            if message.DESCRIPTOR.fields_by_name[v].label == \
+                descriptor.FieldDescriptor.LABEL_REPEATED:
+                setattr(self, k, list(getattr(message, v)))
+            elif message.HasField(v):
+                setattr(self, k, getattr(message, v))
+
+
+class Channel(Entity):
+    FIELDS = {
+        'parent_id': 'parent',
+        'link_ids': 'links',
+        'name': 'name',
+        'description': 'description',
+        'position': 'position',
+    }
+
     def __init__(self, client, id):
+        super().__init__()
         self.client = client
         self.id = id
 
@@ -25,39 +52,30 @@ class Channel(object):
         return [user for user in self.client.users.values()
                      if user.channel_id == self.id]
 
-    def update_from_state(self, message):
-        self.parent_id = message.parent if message.HasField('parent') \
-                                        else None
-        self.link_ids = list(message.links)
-        self.name = message.name
-        self.description = message.description
-        self.position = message.position
 
+class User(Entity):
+    FIELDS = {
+        'user_id': 'user_id',
+        'name': 'name',
+        'channel_id': 'channel_id',
+        'mute': 'mute',
+        'deaf': 'deaf',
+        'suppress': 'suppress',
+        'self_mute': 'self_mute',
+        'self_deaf': 'self_deaf',
+        'hash': 'hash',
+        'comment_hash': 'comment_hash',
+        'comment': 'comment',
+        'texture_hash': 'texture_hash',
+        'texture': 'texture',
+        'priority_speaker': 'priority_speaker',
+        'recording': 'recording',
+    }
 
-class User(object):
     def __init__(self, client, session):
+        super().__init__()
         self.client = client
         self.session = session
 
     def get_channel(self):
         return self.client.channels[self.channel_id]
-
-    def update_from_state(self, message):
-        self.user_id = message.user_id if message.HasField('user_id') else None
-        self.name = message.name
-        self.channel_id = message.channel_id
-        self.mute = message.mute
-        self.deaf = message.deaf
-        self.suppress = message.suppress
-        self.self_mute = message.self_mute
-        self.self_deaf = message.self_deaf
-        self.hash = message.hash
-
-        self.comment_hash = message.comment_hash
-        self.comment = message.comment
-
-        self.texture_hash = message.texture_hash
-        self.texture = message.texture
-
-        self.priority_speaker = message.priority_speaker
-        self.recording = message.recording
