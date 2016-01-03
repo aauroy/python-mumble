@@ -101,11 +101,14 @@ class ControlProtocol(asyncio.Protocol):
                 # Still not enough data.
                 break
 
-            raw_message = self.buffer[self.PACKET_HEADER.size:end_offset]
-            message = self.PACKET_TYPES[type]()
-            message.ParseFromString(bytes(raw_message))
-            self.message_received(message)
+            raw_message = bytes(self.buffer[self.PACKET_HEADER.size:end_offset])
             self.buffer[:] = self.buffer[end_offset:]
+
+            assert len(raw_message) == length
+
+            message = self.PACKET_TYPES[type]()
+            message.ParseFromString(raw_message)
+            self.message_received(message)
 
     def message_received(self, message):
         logger.debug('<-- %s\n%s', message.__class__.__name__, message)
@@ -143,6 +146,14 @@ class ControlProtocol(asyncio.Protocol):
 
     def mumble_server_config_received(self, message):
         self.server_config = message
+
+    def mumble_ping_received(self, message):
+        pass
+
+    def mumble_text_message_received(self, message):
+        self.client.mumble_text_message_received(
+            message.actor, message.message, sessions=list(message.session),
+            channel_ids=list(message.channel_id))
 
     def send_message(self, message):
         logger.debug('--> %s\n%s', message.__class__.__name__, message)

@@ -85,6 +85,10 @@ class Client(object):
     def join_channel(self, channel):
         self.control_protocol.join_channel(self.me.session, channel.id)
 
+    def text_message_received(self, origin, target, message):
+        # Override me!
+        pass
+
     def mumble_channel_state_received(self, state):
         self._add_channel(state)
 
@@ -96,3 +100,12 @@ class Client(object):
 
     def mumble_user_remove_received(self, session):
         self._remove_user(session)
+
+    def mumble_text_message_received(self, actor, message, sessions,
+                                     channel_ids):
+        origin = self.users[actor]
+        for session in sessions:
+            self.text_message_received(origin, self.users[session], message)
+        for channel_id in channel_ids:
+            self.text_message_received(origin, self.channels[channel_id],
+                                       message)
