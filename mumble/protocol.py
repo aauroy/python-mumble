@@ -151,16 +151,19 @@ class ControlProtocol(asyncio.Protocol):
             self.PACKET_NUMBERS[message.__class__], len(raw_message)))
         self.transport.write(raw_message)
 
-    def send_text_message_to_user(self, actor, session, message):
-        self.send_message(Mumble_pb2.TextMessage(actor=actor,
-                                                 session=session,
-                                                 message=message))
-
-    def send_text_message_to_channel(self, actor, channel_id, message,
-                                     recursive):
+    def send_text_message(self, actor, message, sessions=None, channel_ids=None,
+                          tree_ids=None):
         msg = Mumble_pb2.TextMessage(actor=actor, message=message)
-        ids = msg.channel_id if not recursive else msg.tree_id
-        ids.append(channel_id)
+
+        if sessions is not None:
+            msg.session.extend(sessions)
+
+        if channel_ids is not None:
+            msg.channel_id.extend(channel_ids)
+
+        if tree_ids is not None:
+            msg.tree_id.extend(tree_ids)
+
         self.send_message(msg)
 
     def join_channel(self, session, channel_id):

@@ -66,12 +66,21 @@ class Client(object):
         return self.channels[0]
 
     def send_text_message(self, target, message, recursive=False):
+        sessions = []
+        channel_ids = []
+        tree_ids = []
+
         if isinstance(target, entities.User):
-            self.control_protocol.send_text_message_to_user(
-                self.me.session, target.session, message)
+            sessions.append(target.session)
         elif isinstance(target, entities.Channel):
-            self.control_protocol.send_text_message_to_channel(
-                self.me.session, target.id, message, recursive=recursive)
+            if recursive:
+                tree_ids.append(target.id)
+            else:
+                channel_ids.append(target.id)
+
+        self.control_protocol.send_text_message(
+            self.me.session, message, sessions=sessions,
+            channel_ids=channel_ids, tree_ids=tree_ids)
 
     def join_channel(self, channel):
         self.control_protocol.join_channel(self.me.session, channel.id)
