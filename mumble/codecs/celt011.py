@@ -57,10 +57,18 @@ class Decoder(object):
         self.frame_buffer = ffi.new('int16_t[]', FRAME_SIZE)
 
     def decode(self, compressed):
-        celt_call_errret('celt_decode', self.decoder, compressed,
-                         len(compressed), self.frame_buffer, FRAME_SIZE)
+        n = libcelt.celt_decode(
+            self.decoder, compressed, len(compressed), self.frame_buffer,
+            FRAME_SIZE)
+
+        # While celt.h claims that celt_decode returns an error code, it is
+        # doubtful that it actually does, as the return value is always the
+        # frame size.
+        if n < 0:
+            celt_check_error('celt_decode', n)
+
         return bytes(ffi.buffer(ffi.cast('char*', self.frame_buffer),
-                                FRAME_SIZE * 2))
+                                n * 2))
 
 
 class Encoder(object):
