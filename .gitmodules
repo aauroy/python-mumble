@@ -1,0 +1,6 @@
+[submodule "celt-0.11.0"]
+	path = celt-0.11.0
+	url = https://github.com/mumble-voip/celt-0.11.0.git
+[submodule "celt-0.7.0"]
+	path = celt-0.7.0
+	url = https://github.com/mumble-voip/celt-0.7.0

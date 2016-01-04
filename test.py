@@ -9,11 +9,10 @@ import mumble
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('--username', required=True,
                         help='username to connect with')
-arg_parser.add_argument('--password', required=True,
-                        help='password to connect with')
+arg_parser.add_argument('--password', help='password to connect with')
+arg_parser.add_argument('--port', type=int, help='port to connect to',
+                        default=64738)
 arg_parser.add_argument('host', help='host to connect to')
-arg_parser.add_argument('port', type=int, help='port to connect to')
-
 
 
 if __name__ == '__main__':

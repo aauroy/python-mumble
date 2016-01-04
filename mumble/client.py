@@ -27,6 +27,7 @@ class Client(object):
 
         self.control_protocol = protocol.ControlProtocol(self, self.username,
                                                          password)
+        self.voice_protocol = protocol.VoiceProtocol(self)
 
         await self.loop.create_connection(lambda: self.control_protocol,
                                           self.host, self.port, ssl=ssl_ctx)
@@ -101,6 +102,25 @@ class Client(object):
     def connection_ready(self):
         # Override me!
         pass
+
+    def voice_heard(self, user, target, pcm):
+        # Override me!
+        pass
+
+    def mumble_voice_heard(self, session, target, pcm):
+        self.voice_heard(self.users[session], target, pcm)
+
+    def mumble_connection_made(self):
+        self.voice_protocol.connection_made(self.control_protocol.udp_tunnel)
+
+    def mumble_codec_version_received(self, alpha, beta, prefer_alpha, opus):
+        self.voice_protocol.setup_codecs(alpha, beta, prefer_alpha, opus)
+
+    def mumble_crypt_setup_received(self, key, client_nonce, server_nonce):
+        self.voice_protocol.setup_crypt(key, client_nonce, server_nonce)
+
+    def mumble_udp_tunnel_received(self, packet):
+        self.voice_protocol.plaintext_data_received(packet)
 
     def mumble_channel_state_received(self, state):
         self._add_channel(state)

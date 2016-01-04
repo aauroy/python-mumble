@@ -13,4 +13,4 @@ setup(name='mumble', version='0.0', description='Python library for Mumble.',
       packages=find_packages(), long_description=read('README.md'),
       classifiers=['Development Status :: 3 - Alpha',
                    'License :: OSI Approved :: MIT License'],
-      install_requires=['py3-protobuffers'])
+      install_requires=['py3-protobuffers', 'pycryptodome', 'cffi'])
