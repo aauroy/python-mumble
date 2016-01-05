@@ -63,17 +63,35 @@ class Protocol(asyncio.DatagramProtocol):
 
     def setup_codecs(self, alpha, beta, prefer_alpha, opus):
         if alpha:
-            self.codecs[self.PacketType.VOICE_CELT_ALPHA] = \
-                CELT_CODECS[alpha & 0xffffffff].Codec(self.SAMPLE_RATE)
+            try:
+                codec = CELT_CODECS[alpha]
+            except KeyError:
+                logger.warn('Could not configure CELT alpha codec (bitstream '
+                            'version: %d)', alpha)
+            else:
+                self.codecs[self.PacketType.VOICE_CELT_ALPHA] = codec.Codec(
+                    self.SAMPLE_RATE)
 
         if beta:
-            self.codecs[self.PacketType.VOICE_CELT_BETA] = \
-                CELT_CODECS[beta & 0xffffffff].Codec(self.SAMPLE_RATE)
+            try:
+                codec = CELT_CODECS[beta]
+            except KeyError:
+                logger.warn('Could not configure CELT beta codec (bitstream '
+                            'version: %d)', beta)
+            else:
+                self.codecs[self.PacketType.VOICE_CELT_BETA] = codec.Codec(
+                    self.SAMPLE_RATE)
 
-        if prefer_alpha:
-            self.outgoing_codec = self.codecs[self.PacketType.VOICE_CELT_ALPHA]
-        else:
-            self.outgoing_codec = self.codecs[self.PacketType.VOICE_CELT_BETA]
+        try:
+            if prefer_alpha:
+                self.outgoing_codec = self.codecs[
+                    self.PacketType.VOICE_CELT_ALPHA]
+            else:
+                self.outgoing_codec = self.codecs[
+                    self.PacketType.VOICE_CELT_BETA]
+        except KeyError:
+            logger.warn('Could not configure outgoing codec (version: %s)',
+                        'alpha' if prefer_alpha else 'beta')
 
         if opus:
             raise Exception('opus not supported yet')
@@ -94,7 +112,8 @@ class Protocol(asyncio.DatagramProtocol):
             return
 
         if type not in self.codecs:
-            logger.warn('No codec for voice type: %s', type)
+            logger.debug('No codec for voice type: %s', type)
+            return
 
         session, payload = self._decode_varint(payload)
         sequence_number, payload = self._decode_varint(payload)

@@ -147,9 +147,9 @@ class Protocol(asyncio.Protocol):
         self.client.control_udp_tunnel_received(packet)
 
     def mumble_codec_version_received(self, message):
-        self.client.control_codec_version_received(message.alpha, message.beta,
-                                                  message.prefer_alpha,
-                                                  message.opus)
+        self.client.control_codec_version_received(
+            message.alpha & 0xffffffff, message.beta & 0xffffffff,
+            message.prefer_alpha, message.opus)
 
     def mumble_crypt_setup_received(self, message):
         self.client.control_crypt_setup_received(
