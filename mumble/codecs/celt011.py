@@ -22,7 +22,20 @@ void celt_encoder_destroy(CELTEncoder* restrict st);
 
 const char* celt_strerror(int error);
 """)
-libcelt = ffi.dlopen(ctypes.util.find_library('celt0.2'))
+
+
+def _load_libcelt():
+    for library_name in ['libcelt0.so.2', 'libcelt0.2.dylib',
+                         'celt.0.11.0.dll']:
+        try:
+            return ffi.dlopen(library_name)
+        except OSError:
+            pass
+    else:
+        raise ImportError('could not load libcelt')
+
+
+libcelt = _load_libcelt()
 
 
 def celt_check_error(name, error):

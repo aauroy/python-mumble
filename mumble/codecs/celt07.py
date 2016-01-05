@@ -27,7 +27,20 @@ void celt_encoder_destroy(CELTEncoder* st);
 
 const char* celt_strerror(int error);
 """)
-libcelt = ffi.dlopen(ctypes.util.find_library('celt0.0'))
+
+
+def _load_libcelt():
+    for library_name in ['libcelt0.so.0', 'libcelt0.0.dylib',
+                         'celt.0.7.0.dll']:
+        try:
+            return ffi.dlopen(library_name)
+        except OSError:
+            pass
+    else:
+        raise ImportError('could not load libcelt')
+
+
+libcelt = _load_libcelt()
 
 
 def celt_check_error(name, error):
@@ -102,6 +115,7 @@ class Encoder(object):
             celt_check_error('celt_encode', n)
 
         return bytes(ffi.buffer(compressed, n))
+
 
 class Codec(object):
     def __init__(self, rate, frame_size=None, channels=1):

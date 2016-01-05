@@ -7,7 +7,7 @@ def read(fname):
         return f.read()
 
 
-setup(name='mumble', version='0.0', description='Python library for Mumble.',
+setup(name='mumble', version='0.1', description='Python library for Mumble.',
       author='Tony Young', author_email='tony@rfw.name',
       url='https://github.com/rfw/python-mumble', license='MIT',
       packages=find_packages(), long_description=read('README.md'),

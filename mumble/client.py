@@ -2,7 +2,8 @@ import asyncio
 import ssl
 
 from . import entities
-from . import protocol
+from .protocols import control
+from .protocols import voice
 
 
 class Client(object):
@@ -25,9 +26,8 @@ class Client(object):
         self.port = port
         self.username = username
 
-        self.control_protocol = protocol.ControlProtocol(self, self.username,
-                                                         password)
-        self.voice_protocol = protocol.VoiceProtocol(self)
+        self.control_protocol = control.Protocol(self, self.username, password)
+        self.voice_protocol = voice.Protocol(self)
 
         await self.loop.create_connection(lambda: self.control_protocol,
                                           self.host, self.port, ssl=ssl_ctx)
@@ -103,39 +103,39 @@ class Client(object):
         # Override me!
         pass
 
-    def voice_heard(self, user, target, pcm):
+    def voice_received(self, user, target, pcm):
         # Override me!
         pass
 
-    def mumble_voice_heard(self, session, target, pcm):
-        self.voice_heard(self.users[session], target, pcm)
+    def voice_packet_received(self, session, target, pcm):
+        self.voice_received(self.users[session], target, pcm)
 
-    def mumble_connection_made(self):
+    def control_connection_made(self):
         self.voice_protocol.connection_made(self.control_protocol.udp_tunnel)
 
-    def mumble_codec_version_received(self, alpha, beta, prefer_alpha, opus):
+    def control_codec_version_received(self, alpha, beta, prefer_alpha, opus):
         self.voice_protocol.setup_codecs(alpha, beta, prefer_alpha, opus)
 
-    def mumble_crypt_setup_received(self, key, client_nonce, server_nonce):
+    def control_crypt_setup_received(self, key, client_nonce, server_nonce):
         self.voice_protocol.setup_crypt(key, client_nonce, server_nonce)
 
-    def mumble_udp_tunnel_received(self, packet):
+    def control_udp_tunnel_received(self, packet):
         self.voice_protocol.plaintext_data_received(packet)
 
-    def mumble_channel_state_received(self, state):
+    def control_channel_state_received(self, state):
         self._add_channel(state)
 
-    def mumble_channel_remove_received(self, channel_id):
+    def control_channel_remove_received(self, channel_id):
         self._remove_channel(channel_id)
 
-    def mumble_user_state_received(self, state):
+    def control_user_state_received(self, state):
         self._add_user(state)
 
-    def mumble_user_remove_received(self, session):
+    def control_user_remove_received(self, session):
         self._remove_user(session)
 
-    def mumble_text_message_received(self, actor, message, sessions,
-                                     channel_ids):
+    def control_text_message_received(self, actor, message, sessions,
+                                      channel_ids):
         origin = self.users[actor]
         for session in sessions:
             self.text_message_received(origin, self.users[session], message)
