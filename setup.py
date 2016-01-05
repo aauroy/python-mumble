@@ -7,11 +7,11 @@ def read(fname):
         return f.read()
 
 
-setup(name='mumble', version='0.1.1', description='Python library for Mumble.',
+setup(name='mumble', version='0.1.2', description='Python library for Mumble.',
       author='Tony Young', author_email='tony@rfw.name',
       url='https://github.com/rfw/python-mumble', license='MIT',
       packages=find_packages(), long_description=read('README.md'),
       classifiers=['Development Status :: 3 - Alpha',
                    'License :: OSI Approved :: MIT License',
                    'Programming Language :: Python :: 3.5'],
-      install_requires=['py3-protobuffers', 'pycryptodome', 'cffi'])
+      install_requires=['protobuf', 'cffi'])
