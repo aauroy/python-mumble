@@ -14,4 +14,4 @@ setup(name='mumble', version='0.1.3', description='Python library for Mumble.',
       classifiers=['Development Status :: 3 - Alpha',
                    'License :: OSI Approved :: MIT License',
                    'Programming Language :: Python :: 3.5'],
-      install_requires=['protobuf', 'cffi'])
+      install_requires=['protobuf>=3.0.0b1.post1', 'cffi'])

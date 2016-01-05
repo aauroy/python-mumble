@@ -82,19 +82,19 @@ class Protocol(asyncio.DatagramProtocol):
                 self.codecs[self.PacketType.VOICE_CELT_BETA] = codec.Codec(
                     self.SAMPLE_RATE)
 
-        try:
-            if prefer_alpha:
-                self.outgoing_codec = self.codecs[
-                    self.PacketType.VOICE_CELT_ALPHA]
-            else:
-                self.outgoing_codec = self.codecs[
-                    self.PacketType.VOICE_CELT_BETA]
-        except KeyError:
-            logger.warn('Could not configure outgoing codec (version: %s)',
-                        'alpha' if prefer_alpha else 'beta')
-
         if opus:
             raise Exception('opus not supported yet')
+        else:
+            try:
+                if prefer_alpha:
+                    self.outgoing_codec = self.codecs[
+                        self.PacketType.VOICE_CELT_ALPHA]
+                else:
+                    self.outgoing_codec = self.codecs[
+                        self.PacketType.VOICE_CELT_BETA]
+            except KeyError:
+                logger.warn('Could not configure outgoing CELT codec (version: '
+                            '%s)', 'alpha' if prefer_alpha else 'beta')
 
     def datagram_received(self, data, addr):
         pass
