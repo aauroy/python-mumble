@@ -11,12 +11,16 @@ class Entity(object):
             setattr(self, k, None)
 
     def update_from_state(self, message):
-        for k, v in self.FIELDS.items():
-            if message.DESCRIPTOR.fields_by_name[v].label == \
+        for k, f in self.FIELDS.items():
+            v = getattr(message, f)
+
+            if message.DESCRIPTOR.fields_by_name[f].label == \
                 descriptor.FieldDescriptor.LABEL_REPEATED:
-                setattr(self, k, list(getattr(message, v)))
-            elif message.HasField(v):
-                setattr(self, k, getattr(message, v))
+                v = list(v)
+            elif not message.HasField(v):
+                return
+
+            setattr(self, k, v)
 
 
 class Channel(Entity):
