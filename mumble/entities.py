@@ -18,7 +18,7 @@ class Entity(object):
                 descriptor.FieldDescriptor.LABEL_REPEATED:
                 v = list(v)
             elif not message.HasField(v):
-                return
+                continue
 
             setattr(self, k, v)
 
