@@ -27,7 +27,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
     c = mumble.Client()
 
-    def do(self, coro):
+    def do(coro):
         return asyncio.run_coroutine_threadsafe(coro, c.loop).result()
 
     def run_console():

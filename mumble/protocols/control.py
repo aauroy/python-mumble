@@ -209,3 +209,11 @@ class Protocol(asyncio.Protocol):
     def move_user(self, actor, session, channel_id):
         self.send_message(Mumble_pb2.UserState(actor=actor, session=session,
                                                channel_id=channel_id))
+
+    def request_blobs(self, session_textures, session_comments,
+                      channel_descriptions):
+        msg = Mumble_pb2.RequestBlob()
+        msg.session_texture.extend(session_textures)
+        msg.session_comment.extend(session_comments)
+        msg.channel_description.extend(channel_descriptions)
+        self.send_message(msg)

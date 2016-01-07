@@ -1,3 +1,4 @@
+import asyncio
 import operator
 
 from google.protobuf import descriptor
@@ -5,22 +6,46 @@ from google.protobuf import descriptor
 
 class Entity(object):
     FIELDS = {}
+    BLOB_FIELDS = set()
 
     def __init__(self):
+        self._futures = {}
+        self._hashes = {}
+
         for k in self.FIELDS:
             setattr(self, k, None)
 
-    def update_from_state(self, message):
-        for k, f in self.FIELDS.items():
-            v = getattr(message, f)
+    def _future_for_field(self, name):
+        return self._futures[name]
 
-            if message.DESCRIPTOR.fields_by_name[f].label == \
+    def update_from_state(self, state):
+        for k, f in self.FIELDS.items():
+            if state.DESCRIPTOR.fields_by_name[f].label == \
                 descriptor.FieldDescriptor.LABEL_REPEATED:
-                v = list(v)
-            elif not message.HasField(v):
+                v = list(getattr(state, f))
+            elif state.HasField(f):
+                v = getattr(state, f)
+            else:
                 continue
 
             setattr(self, k, v)
+
+        for k in self.BLOB_FIELDS:
+            if state.HasField(k + '_hash'):
+                hash = getattr(state, k + '_hash')
+                if self._hashes.get(k) != hash and k in self._futures:
+                    self._futures[k].cancel()
+                    del self._futures[k]
+                self._hashes[k] = hash
+
+            if k not in self._futures:
+                self._futures[k] = asyncio.Future()
+
+            if not self._futures[k].done():
+                if state.HasField(k):
+                    self._futures[k].set_result(getattr(state, k))
+                elif k not in self._hashes:
+                    self._futures[k].set_result(None)
 
 
 class Channel(Entity):
@@ -28,8 +53,11 @@ class Channel(Entity):
         'parent_id': 'parent',
         'link_ids': 'links',
         'name': 'name',
-        'description': 'description',
         'position': 'position',
+    }
+
+    BLOB_FIELDS = {
+        'description'
     }
 
     def __init__(self, client, id):
@@ -56,6 +84,12 @@ class Channel(Entity):
         return [user for user in self.client.users.values()
                      if user.channel_id == self.id]
 
+    async def get_description(self):
+        fut = self._future_for_field('description')
+        if not fut.done():
+            self.client.request_blobs(description_for_channels=[self])
+        return (await fut)
+
 
 class User(Entity):
     FIELDS = {
@@ -68,12 +102,13 @@ class User(Entity):
         'self_mute': 'self_mute',
         'self_deaf': 'self_deaf',
         'hash': 'hash',
-        'comment_hash': 'comment_hash',
-        'comment': 'comment',
-        'texture_hash': 'texture_hash',
-        'texture': 'texture',
         'priority_speaker': 'priority_speaker',
         'recording': 'recording',
+    }
+
+    BLOB_FIELDS = {
+        'comment',
+        'texture'
     }
 
     def __init__(self, client, session):
@@ -83,3 +118,15 @@ class User(Entity):
 
     def get_channel(self):
         return self.client.channels[self.channel_id]
+
+    async def get_comment(self):
+        fut = self._future_for_field('comment')
+        if not fut.done():
+            self.client.request_blobs(comment_for_users=[self])
+        return (await fut)
+
+    async def get_texture(self):
+        fut = self._future_for_field('texture')
+        if not fut.done():
+            self.client.request_blobs(texture_for_users=[self])
+        return (await fut)

@@ -36,7 +36,7 @@ class Client(object):
     def me(self):
         return self.users_by_name[self.username]
 
-    def _add_channel(self, state):
+    def _update_channel(self, state):
         if state.channel_id not in self.channels:
             self.channels[state.channel_id] = entities.Channel(
                 self, state.channel_id)
@@ -54,7 +54,7 @@ class Client(object):
         del self.channels[id]
         del self.channels_by_name[channel.name]
 
-    def _add_user(self, state):
+    def _update_user(self, state):
         if state.session not in self.users:
             self.users[state.session] = entities.User(self, state.session)
         else:
@@ -95,6 +95,23 @@ class Client(object):
         self.control_protocol.move_user(self.me.session, self.me.session,
                                         channel.id)
 
+    def request_blobs(self, texture_for_users=None, comment_for_users=None,
+                      description_for_channels=None):
+        if texture_for_users is None:
+            texture_for_users = []
+
+        if comment_for_users is None:
+            comment_for_users = []
+
+        if description_for_channels is None:
+            description_for_channels = []
+
+        self.control_protocol.request_blobs(
+            session_textures=[user.session for user in texture_for_users],
+            session_comments=[user.session for user in comment_for_users],
+            channel_descriptions=[channel.id
+                                  for channel in description_for_channels])
+
     def text_message_received(self, origin, target, message):
         # Override me!
         pass
@@ -123,13 +140,13 @@ class Client(object):
         self.voice_protocol.plaintext_data_received(packet)
 
     def control_channel_state_received(self, state):
-        self._add_channel(state)
+        self._update_channel(state)
 
     def control_channel_remove_received(self, channel_id):
         self._remove_channel(channel_id)
 
     def control_user_state_received(self, state):
-        self._add_user(state)
+        self._update_user(state)
 
     def control_user_remove_received(self, session):
         self._remove_user(session)
