@@ -118,7 +118,6 @@ class User(Entity):
         self.channel_id = 0
 
     def get_channel(self):
-        print(self.channel_id)
         return self.client.channels[self.channel_id]
 
     async def get_comment(self):

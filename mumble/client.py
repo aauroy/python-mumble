@@ -112,19 +112,15 @@ class Client(object):
             channel_descriptions=[channel.id
                                   for channel in description_for_channels])
 
-    def user_join_channel(self, user, channel):
+    def user_move_channel(self, user, source, dest):
         # Override me!
         pass
 
-    def user_part_channel(self, user, channel):
+    def user_connect(self, user):
         # Override me!
         pass
 
-    def user_join_server(self, user):
-        # Override me!
-        pass
-
-    def user_part_server(self, user):
+    def user_disconnect(self, user):
         # Override me!
         pass
 
@@ -170,14 +166,14 @@ class Client(object):
         self._update_user(state)
         user = self.users[state.session]
         if new_user:
-            self.user_join_server(user)
+            self.user_connect(user)
         else:
-            self.user_join_channel(user, user.channel_id)
-            if old_chan == self.me.get_channel().id and old_chan != user.channel_id:
-                self.user_part_channel(user, self.me.get_channel().id)
+            print(self.channels[old_chan].name)
+            print(self.channels[user.channel_id].name)
+            self.user_move_channel(user, self.channels[old_chan], self.channels[user.channel_id])
 
     def control_user_remove_received(self, session):
-        self.user_part_server(self.users[session])
+        self.user_disconnect(self.users[session])
         self._remove_user(session)
 
     def control_text_message_received(self, actor, message, sessions,
