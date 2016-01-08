@@ -168,8 +168,6 @@ class Client(object):
         if new_user:
             self.user_connect(user)
         else:
-            print(self.channels[old_chan].name)
-            print(self.channels[user.channel_id].name)
             self.user_move_channel(user, self.channels[old_chan], self.channels[user.channel_id])
 
     def control_user_remove_received(self, session):
