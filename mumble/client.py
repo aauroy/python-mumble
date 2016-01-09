@@ -113,17 +113,14 @@ class Client(object):
                                   for channel in description_for_channels])
 
     def user_moved(self, user, source, dest):
-        print('user_moved')
         # Override me!
         pass
 
     def user_connected(self, user):
-        print('user_connected')
         # Override me!
         pass
 
     def user_disconnected(self, user):
-        print('user_disconnected')
         # Override me!
         pass
 
