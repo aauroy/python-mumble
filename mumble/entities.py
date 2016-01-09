@@ -115,6 +115,7 @@ class User(Entity):
         super().__init__()
         self.client = client
         self.session = session
+        self.channel_id = 0
 
     def get_channel(self):
         return self.client.channels[self.channel_id]
