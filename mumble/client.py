@@ -112,15 +112,18 @@ class Client(object):
             channel_descriptions=[channel.id
                                   for channel in description_for_channels])
 
-    def user_move_channel(self, user, source, dest):
+    def user_moved(self, user, source, dest):
+        print('user_moved')
         # Override me!
         pass
 
-    def user_connect(self, user):
+    def user_connected(self, user):
+        print('user_connected')
         # Override me!
         pass
 
-    def user_disconnect(self, user):
+    def user_disconnected(self, user):
+        print('user_disconnected')
         # Override me!
         pass
 
@@ -166,15 +169,15 @@ class Client(object):
         self._update_user(state)
         user = self.users[state.session]
         if new_user:
-            self.user_connect(user)
-            self.user_move_channel(user, None, self.channels[user.channel_id])
-        elif self.channels[old_chan] != self.channels[user.channel_id]:
-            self.user_move_channel(user, self.channels[old_chan], self.channels[user.channel_id])
+            self.user_connected(user)
+            self.user_moved(user, None, self.channels[user.channel_id])
+        elif self.channels[old_chan] is not self.channels[user.channel_id]:
+            self.user_moved(user, self.channels[old_chan], self.channels[user.channel_id])
 
     def control_user_remove_received(self, session):
         user = self.users[session]
-        self.user_move_channel(user, self.channels[user.channel_id], None)
-        self.user_disconnect(self.users[session])
+        self.user_moved(user, self.channels[user.channel_id], None)
+        self.user_disconnected(self.users[session])
         self._remove_user(session)
 
     def control_text_message_received(self, actor, message, sessions,
